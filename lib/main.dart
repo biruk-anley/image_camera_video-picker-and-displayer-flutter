@@ -46,24 +46,6 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   List<XFile?> _image = [];
 
-  late VideoPlayerController videoPlayerController;
-  late Future<void> init;
-
-  @override
-  initState() {
-    videoPlayerController = VideoPlayerController.asset("assets/u.mp4");
-    init = videoPlayerController.initialize();
-    videoPlayerController.setLooping(true);
-    videoPlayerController.setVolume(1);
-    super.initState();
-  }
-
-  @override
-  onDispose() {
-    videoPlayerController.dispose();
-    super.dispose();
-  }
-
   Future getImage(ImageSource source) async {
     try {
       if (source == ImageSource.gallery) {
@@ -84,18 +66,6 @@ class _MyHomePageState extends State<MyHomePage> {
         });
       }
       Navigator.pop(context);
-    } on PlatformException catch (e) {
-      print('Failed to pick image : $e');
-    }
-  }
-
-  Future getVideo(ImageSource source) async {
-    try {
-      final video = await ImagePicker().pickVideo(source: source);
-      if (video == null) return;
-      setState(() {
-        this._image.add(video);
-      });
     } on PlatformException catch (e) {
       print('Failed to pick image : $e');
     }
