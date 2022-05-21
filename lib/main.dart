@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:video_player/video_player.dart';
 
 void main() {
   runApp(const MyApp());
@@ -44,6 +45,25 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   List<XFile?> _image = [];
+
+  late VideoPlayerController videoPlayerController;
+  late Future<void> init;
+
+  @override
+  initState() {
+    videoPlayerController = VideoPlayerController.asset("assets/u.mp4");
+    init = videoPlayerController.initialize();
+    videoPlayerController.setLooping(true);
+    videoPlayerController.setVolume(1);
+    super.initState();
+  }
+
+  @override
+  onDispose() {
+    videoPlayerController.dispose();
+    super.dispose();
+  }
+
   Future getImage(ImageSource source) async {
     try {
       if (source == ImageSource.gallery) {
@@ -63,6 +83,7 @@ class _MyHomePageState extends State<MyHomePage> {
           this._image.add(image);
         });
       }
+      Navigator.pop(context);
     } on PlatformException catch (e) {
       print('Failed to pick image : $e');
     }
@@ -100,9 +121,6 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
           child: Column(
         children: <Widget>[
-          SizedBox(
-            height: 30,
-          ),
           Expanded(
             child: GridView.builder(
               gridDelegate:
@@ -110,51 +128,124 @@ class _MyHomePageState extends State<MyHomePage> {
               itemCount: 4,
               itemBuilder: (context, index) {
                 return Container(
-                    width: 400,
-                    height: 400,
+                    margin: EdgeInsets.all(15),
+                    width: double.infinity,
+                    height: 1000,
                     child: index >= _image.length
                         ? Container(
-                            color: Colors.blue,
-                            margin: EdgeInsets.all(10),
+                            padding: EdgeInsets.all(15.0),
+                            color: Color.fromARGB(255, 170, 182, 191),
+                            margin: EdgeInsets.all(15),
+                            width: double.infinity,
                           )
                         : Stack(
+                            fit: StackFit.expand,
                             children: [
-                              Image.file(File(_image[index]!.path)),
+                              Image.file(
+                                File(_image[index]!.path),
+                                fit: BoxFit.cover,
+                              ),
                               Positioned(
-                                  top: 10,
+                                  top: 5,
                                   right: 10,
-                                  child: IconButton(
+                                  child: Container(
+                                    child: IconButton(
                                       onPressed: () => deleteImage(index),
-                                      icon: Icon(Icons.remove_circle)))
+                                      icon: Icon(Icons.remove_circle_outline),
+                                      color: Color.fromARGB(221, 170, 6, 6),
+                                      iconSize: 25.0,
+                                    ),
+                                    padding: EdgeInsets.all(1.0),
+                                    margin: EdgeInsets.fromLTRB(0, 5.0, 0, 0.0),
+                                    decoration: BoxDecoration(
+                                      color: Color.fromARGB(198, 233, 216, 34),
+                                      borderRadius: BorderRadius.all(
+                                          Radius.circular(50.0)),
+                                    ),
+                                  ))
                             ],
                           ));
               },
             ),
           ),
           SizedBox(
-            height: 30,
+            height: 10,
           ),
-          CustomButton(
-              title: 'pick from gallllery',
-              icon: Icons.image_outlined,
-              OnClick: () => getImage(ImageSource.gallery)),
-          SizedBox(
-            height: 30,
-          ),
-          CustomButton(
-              title: 'pick from video',
-              icon: Icons.image_outlined,
-              OnClick: () => getVideo(ImageSource.gallery)),
-          SizedBox(
-            height: 30,
-          ),
-          CustomButton(
-              title: 'pick from Camera',
-              icon: Icons.image_outlined,
-              OnClick: () => getImage(ImageSource.camera))
+          if (_image.length > 0 && (_image.length != 4))
+            Container(
+              child: Row(
+                children: <Widget>[
+                  Container(
+                    child: RaisedButton(
+                      onPressed: () {
+                        _bottomSheet(context);
+                      },
+                      child: Text('click me'),
+                    ),
+                  ),
+                  Container(
+                      child: CustomButton(
+                          title: 'Upload',
+                          icon: Icons.image_outlined,
+                          OnClick: () => null))
+                ],
+              ),
+            ),
+          if (_image.length == 4)
+            CustomButton(
+                title: 'Upload',
+                icon: Icons.image_outlined,
+                OnClick: () => null),
+          if (_image.length == 0)
+            CustomButton(
+                title: 'pick from gallllery',
+                icon: Icons.image_outlined,
+                OnClick: () => _bottomSheet(context)),
         ],
       )), // This trailing comma makes auto-formatting nicer for build methods.
     );
+  }
+
+  _bottomSheet(context) {
+    showModalBottomSheet(
+        context: context,
+        builder: (BuildContext c) {
+          return Wrap(
+            children: [
+              Container(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Padding(
+                      padding: EdgeInsets.all(10),
+                      child: Text(
+                        'Add',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                    Divider(
+                      height: 2.0,
+                    ),
+                    if (_image.length != 4)
+                      CustomButton(
+                          title: 'pick from gallllery',
+                          icon: Icons.image_outlined,
+                          OnClick: () => getImage(ImageSource.gallery)),
+                    SizedBox(
+                      height: 30,
+                    ),
+                    if (_image.length != 4)
+                      CustomButton(
+                          title: 'pick up for camera',
+                          icon: Icons.image_outlined,
+                          OnClick: () => getImage(ImageSource.camera)),
+                  ],
+                ),
+              ),
+            ],
+          );
+        });
   }
 }
 
